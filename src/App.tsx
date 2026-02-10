@@ -9,8 +9,8 @@ type Task = {
   description: string;
   status: Status;
   priority: Priority;
-  createdAt: number;
 };
+
 
 const getAddTask = (tasks: Task[], task: Task) => {
   return [...tasks, task];
@@ -30,9 +30,18 @@ const getDeleteTask = (tasks: Task[], id: string) => {
 };
 
 
-
 export default function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([
+    {
+      id: crypto.randomUUID(),
+      title: "Task 1",
+      description: "Description 1",
+      status: "TODO",
+      priority: "LOW",
+  }
+  ]);
+
+  const [editTask, setEditTask] = useState<Task | null>(null);
 
   return (
       <div className="flex flex-col min-h-screen">
@@ -61,7 +70,7 @@ export default function App() {
 
       
           <button className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black mb-4"
-          onClick={getAddTask (tasks, { id: crypto.randomUUID(), title: "", description: "", status: "TODO", priority: "LOW", createdAt: Date.now() })}>
+          onClick={() => setTasks(getAddTask(tasks, { id: crypto.randomUUID(), title: "", description: "", status: "TODO", priority: "LOW" }))}>
             + New Task
 
           </button>
@@ -99,11 +108,11 @@ export default function App() {
                   </div>
                   <div className="flex gap-2">
                     <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
-                    onClick={getUpdateTask (tasks, task)}>
+                    onClick={() => setEditTask(task)}>
                       Edit
                     </button>
                     <button className="text-sm px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
-                    onClick={getDeleteTask(tasks, task.id)}>
+                    onClick={()=> setTasks(getDeleteTask(tasks, task.id))}>
                       Delete
                     </button>
                   </div>
