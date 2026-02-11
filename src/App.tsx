@@ -1,16 +1,6 @@
-import { useState } from "react";
-
-type Status = "TODO" | "DOING" | "DONE";
-type Priority = "LOW" | "MED" | "HIGH";
-
-type Task = {
-  id: string;
-  title: string;
-  description: string;
-  status: Status;
-  priority: Priority;
-};
-
+import { useEffect, useState } from "react";
+import type { Priority, Status, Task } from "./types/task";
+import { loadTasks, saveTasks } from "./utils/storage";
 
 const getAddTask = (tasks: Task[], task: Task) => {
   return [...tasks, task];
@@ -31,15 +21,28 @@ const getDeleteTask = (tasks: Task[], id: string) => {
 
 
 export default function App() {
-  const [tasks, setTasks] = useState<Task[]>([
+
+ const [tasks, setTasks] = useState<Task[]>(() => {
+  const saved = loadTasks();
+  if (saved.length > 0) return saved;
+
+  return [
     {
       id: crypto.randomUUID(),
       title: "Task 1",
       description: "Description 1",
       status: "TODO",
       priority: "LOW",
-    }
-  ]);
+    },
+  ];
+});
+
+useEffect(() => {
+  saveTasks(tasks);
+}, [tasks]);
+
+
+
 
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
 
