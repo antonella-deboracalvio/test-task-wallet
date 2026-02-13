@@ -169,7 +169,12 @@ export default function App() {
           </div>
         )}
 
-
+        <button
+          className="text-sm px-3 py-2 rounded-lg border"
+          onClick={() => setAuditEvents([])}
+        >
+          Clear audit
+        </button>
 
         {/* task */}
         <div className="flex gap-4 mb-6">
@@ -222,6 +227,12 @@ export default function App() {
                   return;
                 }
 
+                pushAudit("WALLET_DEBIT", {
+                  delta: -1,
+                  reason: "TASK_CREATE_COST",
+                });
+
+
                 const newTask: Task = {
                   id: crypto.randomUUID(),
                   title: "",
@@ -232,8 +243,11 @@ export default function App() {
 
                 pushAudit("TASK_CREATED", {
                   taskId: newTask.id,
+                  title: newTask.title,
+                  description: newTask.description,
+                  status: newTask.status
                 });
-                
+
                 setTasks((prev) => getAddTask(prev, newTask));
                 setEditTaskId(newTask.id);
               }}
@@ -297,15 +311,33 @@ export default function App() {
                               value={task.status}
                               onChange={(e) => {
                                 const nextStatus = e.target.value as Status;
+                                const prevStatus = task.status;
+                                // evento status change se cambia davvero
+                                if (prevStatus !== nextStatus) {
+                                  pushAudit("TASK_STATUS_CHANGED", {
+                                    taskId: task.id,
+                                    title: task.title,
+                                    description: task.description,
+                                    from: prevStatus,
+                                    to: nextStatus,
+                                  });
 
-                                // passaggio a DONE
-                                if (task.status !== "DONE" && nextStatus === "DONE") {
-                                  addCredits(2);
+                                  // passaggio a DONE
+                                  if (task.status !== "DONE" && nextStatus === "DONE") {
+                                    addCredits(2);
+
+                                    pushAudit("WALLET_CREDIT", {
+                                      delta: +2,
+                                      reason: "TASK_DONE_REWARD",
+                                      taskId: task.id,
+                                      title: task.title,
+                                      description: task.description
+                                    });
+                                  }
+
+                                  setTasks(getUpdateTask(tasks, { ...task, status: nextStatus }));
                                 }
-
-                                setTasks(getUpdateTask(tasks, { ...task, status: nextStatus }));
                               }}
-
                             >
 
                               <option value="TODO">TODO</option>
@@ -352,8 +384,17 @@ export default function App() {
                     <div className="flex gap-2">
                       {editTaskId === task.id ? (
                         <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
-                          onClick={() => setEditTaskId(null)}>
+                          onClick={() => {
+                            pushAudit("TASK_UPDATED", {
+                              taskId: task.id,
+                              title: task.title,
+                              description: task.description
+                            });
+                            setEditTaskId(null);
+                          }}
+                        >
                           Save
+
                         </button>
                       ) : (
 
@@ -362,14 +403,27 @@ export default function App() {
                           Edit
                         </button>
                       )}
+
+
+
                       <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
                         onClick={() => {
                           setTasks(getDeleteTask(tasks, task.id));
+                          pushAudit("TASK_DELETED", { taskId: task.id });
+
                           if (task.status !== "DONE") {
-                            addCredits(1);
+                            // task: non DONE
+                            pushAudit("WALLET_CREDIT", {
+                              delta: +1,
+                              reason: "TASK_DELETE_REFUND",
+                              taskId: task.id,
+                              title: task.title,
+                              description: task.description
+                            });
                           }
 
-                        }}>
+                        }}
+                      >
                         Delete
                       </button>
                     </div>
@@ -389,7 +443,7 @@ export default function App() {
         {activeTab === "audit" && (
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold mb-2">Audit</h2>
-                 {activeTab === "audit" && <AuditPanel events={auditEvents} />}
+            {activeTab === "audit" && <AuditPanel events={auditEvents} />}
           </div>
         )}
       </main>
