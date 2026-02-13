@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
+import AuditPanel from "./components/audit/auditPanel";
 import WalletPanel from "./components/wallet/walletPanel";
+import type { AuditEvent, AuditEventType } from "./types/audit";
 import type { Priority, Status, Task } from "./types/task";
-import { loadCredits, loadTasks, loadWelcomeSeen, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
+import { loadAudit, loadCredits, loadTasks, loadWelcomeSeen, saveAudit, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
+
+
+
 
 
 
@@ -36,17 +41,7 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>(() => {
     const saved = loadTasks();
     if (saved.length > 0) return saved;
-
-
-    return [
-      {
-        id: crypto.randomUUID(),
-        title: "Task 1",
-        description: "Description 1",
-        status: "TODO",
-        priority: "LOW",
-      },
-    ];
+    return [];
   });
 
 
@@ -77,6 +72,9 @@ export default function App() {
   const [walletError, setWalletError] = useState<string | null>(null);
 
 
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(() => loadAudit());
+
+
 
 
 
@@ -88,6 +86,25 @@ export default function App() {
   useEffect(() => {
     saveCredits(credits);
   }, [credits]);
+
+
+  useEffect(() => {
+    saveAudit(auditEvents);
+  }, [auditEvents]);
+
+  const pushAudit = (
+    type: AuditEventType,
+    payload: Record<string, unknown>
+  ) => {
+    const event: AuditEvent = {
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      type,
+      payload,
+    };
+
+    setAuditEvents((prev) => [event, ...prev]);
+  };
 
 
   return (
@@ -187,7 +204,7 @@ export default function App() {
               }`}
             onClick={() => setActiveTab("audit")}
           >
-            Audit Log
+            Audit log
           </button>
         </div>
 
@@ -198,22 +215,29 @@ export default function App() {
             <button
               className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black mb-4"
               onClick={() => {
-                setWalletError(null);
-
-                const ok = trySpend(1); // costo creazione
+                // 1 credito creazione o blocco
+                const ok = trySpend(1);
                 if (!ok) {
                   setWalletError("Crediti insufficienti: creare un task costa 1 credito.");
                   return;
                 }
 
-                setTasks(getAddTask(tasks, {
+                const newTask: Task = {
                   id: crypto.randomUUID(),
                   title: "",
                   description: "",
                   status: "TODO",
                   priority: "LOW",
-                }));
+                };
+
+                pushAudit("TASK_CREATED", {
+                  taskId: newTask.id,
+                });
+                
+                setTasks((prev) => getAddTask(prev, newTask));
+                setEditTaskId(newTask.id);
               }}
+
             >
 
               + New Task
@@ -223,6 +247,8 @@ export default function App() {
               <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {walletError}
               </div>
+
+
             )}
 
 
@@ -253,6 +279,7 @@ export default function App() {
                             onChange={(e) =>
                               setTasks(getUpdateTask(tasks, { ...task, title: e.target.value }))
                             }
+                            placeholder="Inserisci un titolo..."
                           />
 
                           <textarea
@@ -261,6 +288,7 @@ export default function App() {
                             onChange={(e) =>
                               setTasks(getUpdateTask(tasks, { ...task, description: e.target.value }))
                             }
+                            placeholder="Inserisci una descrizione..."
                           />
 
                           {/* credit a Done */}
@@ -361,7 +389,7 @@ export default function App() {
         {activeTab === "audit" && (
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold mb-2">Audit</h2>
-            <p className="text-slate-500">Eventi.</p>
+                 {activeTab === "audit" && <AuditPanel events={auditEvents} />}
           </div>
         )}
       </main>

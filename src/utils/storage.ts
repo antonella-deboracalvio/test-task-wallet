@@ -1,3 +1,4 @@
+import type { AuditEvent } from "../types/audit";
 import type { Task } from "../types/task";
 
 
@@ -57,4 +58,34 @@ export const loadWelcomeSeen = (): boolean => {
 
 export const saveWelcomeSeen = () => {
   localStorage.setItem(WELCOME_KEY, "1");
+};
+
+
+// audit
+export const AUDIT_KEY = "audit_log";
+
+export const loadAudit = (): AuditEvent[] => {
+  const raw = localStorage.getItem(AUDIT_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(
+      (e) =>
+        e &&
+        typeof e.id === "string" &&
+        typeof e.timestamp === "number" &&
+        typeof e.type === "string" &&
+        e.payload &&
+        typeof e.payload === "object"
+    );
+  } catch {
+    return [];
+  }
+};
+
+export const saveAudit = (events: AuditEvent[]) => {
+  localStorage.setItem(AUDIT_KEY, JSON.stringify(events));
 };
