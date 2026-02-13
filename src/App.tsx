@@ -68,11 +68,25 @@ export default function App() {
     return true;
   };
 
-  // error credit
-  const [walletError, setWalletError] = useState<string | null>(null);
-
-
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(() => loadAudit());
+
+
+  // error generico
+  const [uiError, setUiError] = useState<string | null>(null);
+  // errore input
+  const [fieldErrors, setFieldErrors] = useState<Record<string, { title?: string }>>({});
+
+  // draft
+  type TaskDraft = {
+    title: string;
+    description: string;
+    status: Status;
+    priority: Priority;
+  };
+
+  const [drafts, setDrafts] = useState<Record<string, TaskDraft>>({});
+
+
 
 
 
@@ -223,7 +237,7 @@ export default function App() {
                 // 1 credito creazione o blocco
                 const ok = trySpend(1);
                 if (!ok) {
-                  setWalletError("Crediti insufficienti: creare un task costa 1 credito.");
+                  setUiError("Crediti insufficienti: creare un task costa 1 credito.");
                   return;
                 }
 
@@ -250,6 +264,19 @@ export default function App() {
 
                 setTasks((prev) => getAddTask(prev, newTask));
                 setEditTaskId(newTask.id);
+
+                // set draft
+                setDrafts((prev) => ({
+                  ...prev,
+                  [newTask.id]: {
+                    title: "",
+                    description: "",
+                    status: "TODO",
+                    priority: "LOW",
+                  },
+                }));
+                setFieldErrors((prev) => ({ ...prev, [newTask.id]: {} }));
+
               }}
 
             >
@@ -257,13 +284,14 @@ export default function App() {
               + New Task
             </button>
 
-            {walletError && (
+            {uiError && (
               <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {walletError}
+                {uiError}
               </div>
-
-
             )}
+
+
+
 
 
 
@@ -277,160 +305,249 @@ export default function App() {
 
 
             <ul className="space-y-3">
-              {tasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="border rounded-xl p-4 hover:bg-slate-50 transition"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
+              {tasks.map((task) => {
+                const isEditing = editTaskId === task.id;
+                const draft = drafts[task.id];
+                const view = isEditing && draft ? draft : task;
 
-                      {editTaskId === task.id ? (
-                        <>
-                          <input
-                            className="border p-1 rounded w-full"
-                            value={task.title}
-                            onChange={(e) =>
-                              setTasks(getUpdateTask(tasks, { ...task, title: e.target.value }))
-                            }
-                            placeholder="Inserisci un titolo..."
-                          />
+                return (
+                  <li
+                    key={task.id}
+                    className="border rounded-xl p-4 hover:bg-slate-50 transition"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
 
-                          <textarea
-                            className="border p-1 rounded w-full mt-1"
-                            value={task.description}
-                            onChange={(e) =>
-                              setTasks(getUpdateTask(tasks, { ...task, description: e.target.value }))
-                            }
-                            placeholder="Inserisci una descrizione..."
-                          />
-
-                          {/* credit a Done */}
-                          <div className="mt-2 flex gap-2">
-                            <select className="text-xs px-2 py-1 rounded-full bg-slate-100"
-                              value={task.status}
+                        {editTaskId === task.id ? (
+                          <>
+                            <input
+                              className="border p-1 rounded w-full"
+                              value={view.title}
                               onChange={(e) => {
-                                const nextStatus = e.target.value as Status;
-                                const prevStatus = task.status;
-                                // evento status change se cambia davvero
-                                if (prevStatus !== nextStatus) {
-                                  pushAudit("TASK_STATUS_CHANGED", {
-                                    taskId: task.id,
-                                    title: task.title,
-                                    description: task.description,
-                                    from: prevStatus,
-                                    to: nextStatus,
-                                  });
+                                const v = e.target.value;
 
-                                  // passaggio a DONE
-                                  if (task.status !== "DONE" && nextStatus === "DONE") {
-                                    addCredits(2);
+                                setDrafts((prev) => ({
+                                  ...prev,
+                                  [task.id]: { ...prev[task.id], title: v },
+                                }));
 
-                                    pushAudit("WALLET_CREDIT", {
-                                      delta: +2,
-                                      reason: "TASK_DONE_REWARD",
-                                      taskId: task.id,
-                                      title: task.title,
-                                      description: task.description
-                                    });
-                                  }
-
-                                  setTasks(getUpdateTask(tasks, { ...task, status: nextStatus }));
+                                // pulizia errore se scrivi qualcosa
+                                if (v.trim()) {
+                                  setFieldErrors((prev) => ({
+                                    ...prev,
+                                    [task.id]: { ...prev[task.id], title: undefined },
+                                  }));
                                 }
                               }}
-                            >
+                              placeholder="Inserisci un titolo..."
+                            />
 
-                              <option value="TODO">TODO</option>
-                              <option value="DOING"
-                              >DOING</option>
-                              <option value="DONE" >
-                                DONE
-                              </option>
+                            {/* errore campo */}
+                            {fieldErrors[task.id]?.title && (
+                              <p className="mt-1 text-sm text-red-600">{fieldErrors[task.id]!.title}</p>
+                            )}
 
-                            </select>
+                            <textarea
+                              className="border p-1 rounded w-full mt-1"
+                              value={view.description}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setDrafts((prev) => ({
+                                  ...prev,
+                                  [task.id]: { ...prev[task.id], description: v },
+                                }));
+                              }}
+                              placeholder="Inserisci una descrizione..."
+                            />
 
-                            <select className="text-xs px-2 py-1 rounded-full bg-slate-100"
-                              value={task.priority}
-                              onChange={(e) =>
-                                setTasks(getUpdateTask(tasks, { ...task, priority: e.target.value as Priority }))
+                            {/* credit a Done */}
+                            <div className="mt-2 flex gap-2">
+                              <select className="text-xs px-2 py-1 rounded-full bg-slate-100"
+                                value={view.status}
+                                onChange={(e) => {
+                                  const nextStatus = e.target.value as Status;
+
+                                  const title = (drafts[task.id]?.title ?? "").trim();
+                                  if (title === "" && nextStatus !== "TODO") {
+                                    setFieldErrors((prev) => ({
+                                      ...prev,
+                                      [task.id]: { ...prev[task.id], title: "Il titolo è obbligatorio" },
+                                    }));
+                                    return; // blocco doing e done se titolo vuoto
+                                  }
+
+                                  setDrafts((prev) => ({
+                                    ...prev,
+                                    [task.id]: { ...prev[task.id], status: nextStatus },
+                                  }));
+                                }}
+                              >
+
+                                <option value="TODO">TODO</option>
+                                <option value="DOING">DOING</option>
+                                <option value="DONE"> DONE</option>
+
+                              </select>
+
+                              <select className="text-xs px-2 py-1 rounded-full bg-slate-100"
+                                value={view.priority}
+                                onChange={(e) => {
+                                  const nextPriority = e.target.value as Priority;
+                                  setDrafts((prev) => ({
+                                    ...prev,
+                                    [task.id]: { ...prev[task.id], priority: nextPriority },
+                                  }));
+                                }}
+                              >
+                                <option value="LOW">LOW</option>
+                                <option value="MED">MED</option>
+                                <option value="HIGH">HIGH</option>
+                              </select>
+                            </div>
+                          </>
+
+                        ) : (
+
+                          <>
+
+
+                            <h2 className="text-lg font-semibold">{task.title}</h2>
+                            <p className="text-sm text-slate-500">{task.description}</p>
+                            <div className="mt-2 flex gap-2">
+                              <span className="text-xs px-2 py-1 rounded-full bg-slate-100">
+                                {task.status}
+                              </span>
+                              <span className="text-xs px-2 py-1 rounded-full bg-slate-100">
+                                {task.priority}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        {editTaskId === task.id ? (
+                          <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
+
+                            onClick={() => {
+                              const d = drafts[task.id];
+                              if (!d) return;
+
+                              if (!d.title.trim()) {
+                                setFieldErrors((prev) => ({
+                                  ...prev,
+                                  [task.id]: { ...prev[task.id], title: "Il titolo è obbligatorio" },
+                                }));
+                                return;
                               }
-                            >
-                              <option value="LOW">LOW</option>
-                              <option value="MED">MED</option>
-                              <option value="HIGH">HIGH</option>
-                            </select>
-                          </div>
-                        </>
 
-                      ) : (
+                              const prevTask = task;
+                              const nextTask: Task = {
+                                ...prevTask,
+                                title: d.title,
+                                description: d.description,
+                                status: d.status,
+                                priority: d.priority,
+                              };
 
-                        <>
+                              pushAudit("TASK_UPDATED", {
+                                taskId: nextTask.id,
+                                title: nextTask.title,
+                                description: nextTask.description,
+                                status: nextTask.status,
+                                priority: nextTask.priority,
+                              });
+
+                              if (prevTask.status !== nextTask.status) {
+                                pushAudit("TASK_STATUS_CHANGED", {
+                                  taskId: nextTask.id,
+                                  from: prevTask.status,
+                                  to: nextTask.status,
+                                  title: nextTask.title,
+                                  description: nextTask.description,
+                                });
+
+                                if (prevTask.status !== "DONE" && nextTask.status === "DONE") {
+                                  addCredits(2);
+                                  pushAudit("WALLET_CREDIT", {
+                                    delta: +2,
+                                    reason: "TASK_DONE_REWARD",
+                                    taskId: nextTask.id,
+                                    title: nextTask.title,
+                                    description: nextTask.description,
+                                  });
+                                }
+                              }
+
+                              setTasks((prev) => getUpdateTask(prev, nextTask));
+
+                              setEditTaskId(null);
+                              setDrafts((prev) => {
+                                const copy = { ...prev };
+                                delete copy[task.id];
+                                return copy;
+                              });
+                              setFieldErrors((prev) => ({ ...prev, [task.id]: {} }));
+                            }}
+
+                          >
+                            Save
+
+                          </button>
+                        ) : (
+
+                          <button
+                            className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
+                            onClick={() => {
+                              // setUiError(null);
+                              setEditTaskId(task.id);
+
+                              setDrafts((prev) => ({
+                                ...prev,
+                                [task.id]: {
+                                  title: task.title ?? "",
+                                  description: task.description ?? "",
+                                  status: task.status,
+                                  priority: task.priority,
+                                },
+                              }));
+
+                              setFieldErrors((prev) => ({ ...prev, [task.id]: {} }));
+                            }}
+                          >
+                            Edit
+                          </button>
+
+                        )}
 
 
-                          <h2 className="text-lg font-semibold">{task.title}</h2>
-                          <p className="text-sm text-slate-500">{task.description}</p>
-                          <div className="mt-2 flex gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-slate-100">
-                              {task.status}
-                            </span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-slate-100">
-                              {task.priority}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
 
-                    <div className="flex gap-2">
-                      {editTaskId === task.id ? (
                         <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
                           onClick={() => {
-                            pushAudit("TASK_UPDATED", {
-                              taskId: task.id,
-                              title: task.title,
-                              description: task.description
-                            });
-                            setEditTaskId(null);
+                            setTasks(getDeleteTask(tasks, task.id));
+                            pushAudit("TASK_DELETED", { taskId: task.id });
+
+                            if (task.status !== "DONE") {
+                              // task: non DONE
+                              pushAudit("WALLET_CREDIT", {
+                                delta: +1,
+                                reason: "TASK_DELETE_REFUND",
+                                taskId: task.id,
+                                title: task.title,
+                                description: task.description
+                              });
+                            }
+
                           }}
                         >
-                          Save
-
+                          Delete
                         </button>
-                      ) : (
-
-                        <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
-                          onClick={() => setEditTaskId(task.id)}>
-                          Edit
-                        </button>
-                      )}
-
-
-
-                      <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
-                        onClick={() => {
-                          setTasks(getDeleteTask(tasks, task.id));
-                          pushAudit("TASK_DELETED", { taskId: task.id });
-
-                          if (task.status !== "DONE") {
-                            // task: non DONE
-                            pushAudit("WALLET_CREDIT", {
-                              delta: +1,
-                              reason: "TASK_DELETE_REFUND",
-                              taskId: task.id,
-                              title: task.title,
-                              description: task.description
-                            });
-                          }
-
-                        }}
-                      >
-                        Delete
-                      </button>
+                      </div>
                     </div>
-                  </div>
 
-                </li>
-              ))}
+                  </li>
+                );
+              })}
 
             </ul>
           </>
