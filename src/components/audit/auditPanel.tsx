@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { AuditEvent, AuditEventType } from "../../types/audit";
 import { AuditLabels } from "../../types/audit";
-import FilterAll from "../filter/filterAll";
+import FilterBar from "../filter/filterBar";
+
 
 
 const auditOptions = [
@@ -62,13 +63,13 @@ export default function AuditPanel({ events }: { events: AuditEvent[] }) {
     return (
         
         <div className="bg-white rounded-xl shadow p-6">
-        <FilterAll
-        options={auditOptions}
-        selected={typeFilter}
-        onSelect={(value) => setTypeFilter(value as AuditEventType | "ALL")}
-        search={textFilter}
-        onSearch={(value) => setTextFilter(value)}
-      />
+        <FilterBar
+            selects={[
+                { options: auditOptions, selected: typeFilter, onSelect:(value)=>setTypeFilter(value as AuditEventType|"ALL") },
+            ]}
+            search={textFilter}
+            onSearch={setTextFilter}
+        />
 
         
             <p className="text-sm text-slate-500 mb-4">
