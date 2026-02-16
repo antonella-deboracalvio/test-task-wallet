@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import AuditPanel from "./components/audit/auditPanel";
 import FilterBar from "./components/filter/filterBar";
+import DataPort from "./components/iePort/dataPort";
 import WalletPanel from "./components/wallet/walletPanel";
 import type { AuditEvent, AuditEventType } from "./types/audit";
 import type { Priority, Status, Task } from "./types/task";
 import { loadAudit, loadCredits, loadTasks, loadWelcomeSeen, saveAudit, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
+import { isExportPayloadV1 } from "./utils/validators";
 
 
 
@@ -86,12 +88,12 @@ export default function App() {
   const [drafts, setDrafts] = useState<Record<string, TaskDraft>>({});
 
 
-type StatusFilter = Status | "ALL";
-type PriorityFilter = Priority | "ALL";
+  type StatusFilter = Status | "ALL";
+  type PriorityFilter = Priority | "ALL";
 
-const [taskStatusFilter, setTaskStatusFilter] = useState<StatusFilter>("ALL");
-const [taskPriorityFilter, setTaskPriorityFilter] = useState<PriorityFilter>("ALL");
-const [taskSearch, setTaskSearch] = useState("");
+  const [taskStatusFilter, setTaskStatusFilter] = useState<StatusFilter>("ALL");
+  const [taskPriorityFilter, setTaskPriorityFilter] = useState<PriorityFilter>("ALL");
+  const [taskSearch, setTaskSearch] = useState("");
 
 
 
@@ -130,15 +132,15 @@ const [taskSearch, setTaskSearch] = useState("");
 
   const q = taskSearch.trim().toLowerCase();
 
-const filteredTasks = tasks.filter((t) => {
-  const matchStatus = taskStatusFilter === "ALL" ? true : t.status === taskStatusFilter;
-  const matchPriority = taskPriorityFilter === "ALL" ? true : t.priority === taskPriorityFilter;
+  const filteredTasks = tasks.filter((t) => {
+    const matchStatus = taskStatusFilter === "ALL" ? true : t.status === taskStatusFilter;
+    const matchPriority = taskPriorityFilter === "ALL" ? true : t.priority === taskPriorityFilter;
 
-  const haystack = `${t.title} ${t.description}`.toLowerCase();
-  const matchText = q === "" ? true : haystack.includes(q);
+    const haystack = `${t.title} ${t.description}`.toLowerCase();
+    const matchText = q === "" ? true : haystack.includes(q);
 
-  return matchStatus && matchPriority && matchText;
-});
+    return matchStatus && matchPriority && matchText;
+  });
 
 
 
@@ -312,49 +314,92 @@ const filteredTasks = tasks.filter((t) => {
             )}
 
 
+            {/* import/export */}
+
+            <DataPort
+              buildExportPayload={() => ({
+                version: 1,
+                exportedAt: Date.now(),
+                tasks,
+                credits,
+                auditEvents,
+
+                
+                welcomeSeen: !showWelcomeCredits,
+              })}
+              onImportPayload={(payload: unknown) => {
+                // errore JSON non valido
+                if (typeof payload === "object" && payload !== null && "__error" in payload) {
+                  setUiError("Import fallito: JSON non valido.");
+                  return;
+                }
+
+                // validazione struttura
+                if (!isExportPayloadV1(payload)) {
+                  setUiError("Import fallito: formato file non valido.");
+                  return;
+                }
+
+                // applica import
+                setTasks(payload.tasks);
+                setCredits(payload.credits);
+                setAuditEvents(payload.auditEvents ?? []);
+
+                // reset
+                setEditTaskId(null);
+                setDrafts({});
+                setFieldErrors({});
+                setUiError(null);
+              }}
+
+            />
+
+
+
+
             <FilterBar
-  selects={[
-    {
-      options: [
-        { label: "Tutti gli stati", value: "ALL" },
-        { label: "TODO", value: "TODO" },
-        { label: "DOING", value: "DOING" },
-        { label: "DONE", value: "DONE" },
-      ],
-      selected: taskStatusFilter,
-      onSelect: (v) => setTaskStatusFilter(v as StatusFilter),
-    },
-    {
-      options: [
-        { label: "Tutte le priorità", value: "ALL" },
-        { label: "LOW", value: "LOW" },
-        { label: "MED", value: "MED" },
-        { label: "HIGH", value: "HIGH" },
-      ],
-      selected: taskPriorityFilter,
-      onSelect: (v) => setTaskPriorityFilter(v as PriorityFilter),
-    },
-  ]}
-  search={taskSearch}
-  onSearch={setTaskSearch}
-/>
+              selects={[
+                {
+                  options: [
+                    { label: "Tutti gli stati", value: "ALL" },
+                    { label: "TODO", value: "TODO" },
+                    { label: "DOING", value: "DOING" },
+                    { label: "DONE", value: "DONE" },
+                  ],
+                  selected: taskStatusFilter,
+                  onSelect: (v) => setTaskStatusFilter(v as StatusFilter),
+                },
+                {
+                  options: [
+                    { label: "Tutte le priorità", value: "ALL" },
+                    { label: "LOW", value: "LOW" },
+                    { label: "MED", value: "MED" },
+                    { label: "HIGH", value: "HIGH" },
+                  ],
+                  selected: taskPriorityFilter,
+                  onSelect: (v) => setTaskPriorityFilter(v as PriorityFilter),
+                },
+              ]}
+              search={taskSearch}
+              onSearch={setTaskSearch}
+            />
 
-<div className="mb-3 flex items-center justify-between">
-  <span className="text-sm text-slate-500">
-    Mostrati {filteredTasks.length} / {tasks.length}
-  </span>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                Mostrati {filteredTasks.length} / {tasks.length}
+              </span>
 
-  <button
-    className="text-sm px-3 py-2 rounded-lg border hover:bg-slate-50"
-    onClick={() => {
-      setTaskSearch("");
-      setTaskStatusFilter("ALL");
-      setTaskPriorityFilter("ALL");
-    }}
-  >
-    Reset filtri
-  </button>
-</div>
+              <button
+                className="text-sm px-3 py-2 rounded-lg border hover:bg-slate-50"
+                onClick={() => {
+                  setTaskSearch("");
+                  setTaskStatusFilter("ALL");
+                  setTaskPriorityFilter("ALL");
+                }}
+              >
+                Reset filtri
+              </button>
+            </div>
 
 
 
