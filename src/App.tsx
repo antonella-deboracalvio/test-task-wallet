@@ -3,9 +3,11 @@ import AuditPanel from "./components/audit/auditPanel";
 import FilterBar from "./components/filter/filterBar";
 import DataPort from "./components/iePort/dataPort";
 import WalletPanel from "./components/wallet/walletPanel";
-import type { AuditEvent, AuditEventType } from "./types/audit";
+import { useAudit } from "./hooks/useAudit";
+import type { PriorityFilter, StatusFilter } from "./hooks/useTaskFilter";
+import { useTaskFilters } from "./hooks/useTaskFilter";
 import type { Priority, Status, Task } from "./types/task";
-import { loadAudit, loadCredits, loadTasks, loadWelcomeSeen, saveAudit, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
+import { loadCredits, loadTasks, loadWelcomeSeen, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
 import { addTask, deleteTask, updateTask } from "./utils/taskCrud";
 import { isExportPayloadV1 } from "./utils/validators";
 import { getDoneRewardDelta } from "./utils/walletRules";
@@ -13,12 +15,8 @@ import { getDoneRewardDelta } from "./utils/walletRules";
 
 
 
-
-
-
 // ui
 type Tab = "tasks" | "wallet" | "audit";
-
 
 
 export default function App() {
@@ -28,7 +26,6 @@ export default function App() {
     if (saved.length > 0) return saved;
     return [];
   });
-
 
 
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
@@ -53,7 +50,9 @@ export default function App() {
     return true;
   };
 
-  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(() => loadAudit());
+
+  
+const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
 
   // error generico
@@ -72,14 +71,16 @@ export default function App() {
   const [drafts, setDrafts] = useState<Record<string, TaskDraft>>({});
 
 
-  type StatusFilter = Status | "ALL";
-  type PriorityFilter = Priority | "ALL";
-
-  const [taskStatusFilter, setTaskStatusFilter] = useState<StatusFilter>("ALL");
-  const [taskPriorityFilter, setTaskPriorityFilter] = useState<PriorityFilter>("ALL");
-  const [taskSearch, setTaskSearch] = useState("");
-
-
+  const {
+  taskStatusFilter,
+  setTaskStatusFilter,
+  taskPriorityFilter,
+  setTaskPriorityFilter,
+  taskSearch,
+  setTaskSearch,
+  filteredTasks,
+  resetFilters
+} = useTaskFilters(tasks);
 
 
 
@@ -92,40 +93,6 @@ export default function App() {
   useEffect(() => {
     saveCredits(credits);
   }, [credits]);
-
-
-  useEffect(() => {
-    saveAudit(auditEvents);
-  }, [auditEvents]);
-
-  const pushAudit = (
-    type: AuditEventType,
-    payload: Record<string, unknown>
-  ) => {
-    const event: AuditEvent = {
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      type,
-      payload,
-    };
-
-    setAuditEvents((prev) => [event, ...prev]);
-  };
-
-
-
-  const q = taskSearch.trim().toLowerCase();
-
-  const filteredTasks = tasks.filter((t) => {
-    const matchStatus = taskStatusFilter === "ALL" ? true : t.status === taskStatusFilter;
-    const matchPriority = taskPriorityFilter === "ALL" ? true : t.priority === taskPriorityFilter;
-
-    const haystack = `${t.title} ${t.description}`.toLowerCase();
-    const matchText = q === "" ? true : haystack.includes(q);
-
-    return matchStatus && matchPriority && matchText;
-  });
-
 
 
   return (
@@ -369,11 +336,7 @@ export default function App() {
 
               <button
                 className="text-sm px-3 py-2 rounded-lg border hover:bg-slate-50"
-                onClick={() => {
-                  setTaskSearch("");
-                  setTaskStatusFilter("ALL");
-                  setTaskPriorityFilter("ALL");
-                }}
+                onClick={resetFilters}
               >
                 Reset filtri
               </button>
@@ -656,7 +619,7 @@ export default function App() {
 
              <button
           className="text-sm px-3 py-2 rounded-lg border"
-          onClick={() => setAuditEvents([])}
+           onClick={clearAudit}
         >
           Clear audit
         </button>
