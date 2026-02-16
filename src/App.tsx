@@ -6,30 +6,14 @@ import WalletPanel from "./components/wallet/walletPanel";
 import type { AuditEvent, AuditEventType } from "./types/audit";
 import type { Priority, Status, Task } from "./types/task";
 import { loadAudit, loadCredits, loadTasks, loadWelcomeSeen, saveAudit, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
+import { addTask, deleteTask, updateTask } from "./utils/taskCrud";
 import { isExportPayloadV1 } from "./utils/validators";
+import { getDoneRewardDelta } from "./utils/walletRules";
 
 
 
 
 
-
-// crud
-const getAddTask = (tasks: Task[], task: Task) => {
-  return [...tasks, task];
-};
-
-const getUpdateTask = (tasks: Task[], task: Task) => {
-  return tasks.map((t) => {
-    if (t.id === task.id) {
-      return task;
-    }
-    return t;
-  });
-};
-
-const getDeleteTask = (tasks: Task[], id: string) => {
-  return tasks.filter((t) => t.id !== id);
-};
 
 
 // ui
@@ -206,12 +190,6 @@ export default function App() {
           </div>
         )}
 
-        <button
-          className="text-sm px-3 py-2 rounded-lg border"
-          onClick={() => setAuditEvents([])}
-        >
-          Clear audit
-        </button>
 
         {/* task */}
         <div className="flex gap-4 mb-6">
@@ -285,7 +263,7 @@ export default function App() {
                   status: newTask.status
                 });
 
-                setTasks((prev) => getAddTask(prev, newTask));
+                setTasks((prev) => addTask(prev, newTask));
                 setEditTaskId(newTask.id);
 
                 // set draft
@@ -324,7 +302,7 @@ export default function App() {
                 credits,
                 auditEvents,
 
-                
+
                 welcomeSeen: !showWelcomeCredits,
               })}
               onImportPayload={(payload: unknown) => {
@@ -579,10 +557,12 @@ export default function App() {
                                   description: nextTask.description,
                                 });
 
+                                const delta = getDoneRewardDelta(prevTask.status, nextTask.status);
+
                                 if (prevTask.status !== "DONE" && nextTask.status === "DONE") {
-                                  addCredits(2);
+                                  addCredits(delta);
                                   pushAudit("WALLET_CREDIT", {
-                                    delta: +2,
+                                    delta,
                                     reason: "TASK_DONE_REWARD",
                                     taskId: nextTask.id,
                                     title: nextTask.title,
@@ -591,7 +571,7 @@ export default function App() {
                                 }
                               }
 
-                              setTasks((prev) => getUpdateTask(prev, nextTask));
+                              setTasks((prev) => updateTask(prev, nextTask));
 
                               setEditTaskId(null);
                               setDrafts((prev) => {
@@ -636,10 +616,11 @@ export default function App() {
 
                         <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
                           onClick={() => {
-                            setTasks(getDeleteTask(tasks, task.id));
+                            setTasks(deleteTask(tasks, task.id));
                             pushAudit("TASK_DELETED", { taskId: task.id });
 
                             if (task.status !== "DONE") {
+                              addCredits(1);
                               // task: non DONE
                               pushAudit("WALLET_CREDIT", {
                                 delta: +1,
@@ -672,6 +653,14 @@ export default function App() {
         {activeTab === "audit" && (
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold mb-2">Audit</h2>
+
+             <button
+          className="text-sm px-3 py-2 rounded-lg border"
+          onClick={() => setAuditEvents([])}
+        >
+          Clear audit
+        </button>
+
             {activeTab === "audit" && <AuditPanel events={auditEvents} />}
           </div>
         )}
