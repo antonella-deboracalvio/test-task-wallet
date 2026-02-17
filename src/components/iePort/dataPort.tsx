@@ -23,9 +23,9 @@ export default function DataPort({
   disabled,
 }: DataPortProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="mt-4 mb-4 flex flex-wrap gap-2">
       <button
-        className="text-sm px-3 py-2 rounded-lg border hover:bg-slate-50 disabled:opacity-50"
+        className="btn-base text-sm px-3 py-2 rounded-lg border hover:bg-slate-50 disabled:opacity-50"
         disabled={disabled}
         onClick={() => {
           const payload = buildExportPayload();
@@ -37,7 +37,7 @@ export default function DataPort({
       </button>
 
       <label
-        className={`text-sm px-3 py-2 rounded-lg border hover:bg-slate-50 cursor-pointer ${
+        className={` btn-base text-sm px-3 py-2 rounded-lg border hover:bg-slate-50 cursor-pointer ${
           disabled ? "opacity-50 pointer-events-none" : ""
         }`}
       >

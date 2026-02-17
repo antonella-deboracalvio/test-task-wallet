@@ -23,7 +23,7 @@ export default function FilterBar({ selects, search, onSearch }: FilterBarProps)
         {selects.map((s, idx: number) => (
             <select
             key={idx}
-        className="border rounded-lg px-3 py-2 text-sm"
+        className="list-base border rounded-lg px-3 py-2 text-sm"
         value={s.selected}
         onChange={(e) => s.onSelect(e.target.value)}
       >
@@ -40,7 +40,7 @@ export default function FilterBar({ selects, search, onSearch }: FilterBarProps)
       <input
         type="text"
         placeholder="Cerca..."
-        className="border rounded-lg px-3 py-2 text-sm flex-1"
+        className="list-base border rounded-lg px-3 py-2 text-sm flex-1"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
       />

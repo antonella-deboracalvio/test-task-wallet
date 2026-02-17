@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import AuditPanel from "./components/audit/auditPanel";
 import FilterBar from "./components/filter/filterBar";
 import DataPort from "./components/iePort/dataPort";
+import ThemeToggle from "./components/ui/themeToggle";
 import WalletPanel from "./components/wallet/walletPanel";
 import { useAudit } from "./hooks/useAudit";
 import type { PriorityFilter, StatusFilter } from "./hooks/useTaskFilter";
 import { useTaskFilters } from "./hooks/useTaskFilter";
+import { useTheme } from "./hooks/useTheme";
 import type { Priority, Status, Task } from "./types/task";
 import { loadCredits, loadTasks, loadWelcomeSeen, saveCredits, saveTasks, saveWelcomeSeen } from "./utils/storage";
 import { addTask, deleteTask, updateTask } from "./utils/taskCrud";
@@ -51,8 +53,8 @@ export default function App() {
   };
 
 
-  
-const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
+
+  const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
 
   // error generico
@@ -72,15 +74,15 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
 
   const {
-  taskStatusFilter,
-  setTaskStatusFilter,
-  taskPriorityFilter,
-  setTaskPriorityFilter,
-  taskSearch,
-  setTaskSearch,
-  filteredTasks,
-  resetFilters
-} = useTaskFilters(tasks);
+    taskStatusFilter,
+    setTaskStatusFilter,
+    taskPriorityFilter,
+    setTaskPriorityFilter,
+    taskSearch,
+    setTaskSearch,
+    filteredTasks,
+    resetFilters
+  } = useTaskFilters(tasks);
 
 
 
@@ -95,17 +97,24 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
   }, [credits]);
 
 
+  const { theme, toggleTheme } = useTheme();
+
+
+
   return (
+    
+    
 
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
 
-      <header className="bg-white shadow-sm border-b">
+
+      <header className="border-b bg-white/80 dark:bg-slate-900/60 dark:border-slate-700 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">
-            Task
-          </h1>
+          <h1 className="text-xl font-bold">G-Task Wallet</h1>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </div>
       </header>
+
 
       <main className="max-w-5xl mx-auto px-6 py-8">
 
@@ -143,7 +152,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
                   </div>
 
                   <button
-                    className="mt-8 w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-black transition"
+                    className=" btn mt-8 w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-black transition"
                     onClick={() => {
                       setShowWelcomeCredits(false);
                       saveWelcomeSeen();
@@ -161,10 +170,12 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
         {/* task */}
         <div className="flex gap-4 mb-6">
           <button
-            className={`px-4 py-2 rounded-lg border ${activeTab === "tasks"
-              ? "bg-blue-600 text-white shadow border-blue-600"
-              : "bg-white hover:bg-slate-50"
-              }`}
+          className={` btn px-4 py-2 rounded-lg border ${
+  activeTab === "tasks"
+    ? "bg-blue-600 text-white shadow border-blue-600"
+    : "bg-white dark:bg-slate-900 :bg-slate-50 dark:hover:bg-slathovere-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+}`}
+
             onClick={() => setActiveTab("tasks")}
           >
             Tasks
@@ -173,10 +184,12 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
           {/* wallet */}
           <button
-            className={`px-4 py-2 rounded-lg border ${activeTab === "wallet"
-              ? "bg-blue-600 text-white shadow border-blue-600"
-              : "bg-white hover:bg-slate-50"
-              }`}
+         className={`btn px-4 py-2 rounded-lg border ${
+  activeTab === "wallet"
+    ? "bg-blue-600 text-white shadow border-blue-600"
+    : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+}`}
+
             onClick={() => setActiveTab("wallet")}
           >
             Wallet
@@ -184,15 +197,17 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
 
           {/* audit */}
-          <button
-            className={`px-4 py-2 rounded-lg border ${activeTab === "audit"
-              ? "bg-blue-600 text-white shadow border-blue-600"
-              : "bg-white hover:bg-slate-50"
-              }`}
-            onClick={() => setActiveTab("audit")}
-          >
-            Audit log
-          </button>
+       <button
+  className={`px-4 py-2 rounded-lg border ${
+    activeTab === "audit"
+      ? "bg-blue-600 text-white shadow border-blue-600"
+      : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+  }`}
+  onClick={() => setActiveTab("audit")}
+>
+  Audit
+</button>
+
         </div>
 
         {/* new task */}
@@ -200,7 +215,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
         {activeTab === "tasks" && (
           <>
             <button
-              className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black mb-4"
+              className=" btn-base inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black transition"
               onClick={() => {
                 // 1 credito creazione o blocco
                 const ok = trySpend(1);
@@ -335,7 +350,8 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
               </span>
 
               <button
-                className="text-sm px-3 py-2 rounded-lg border hover:bg-slate-50"
+                className=" btn-base text-sm px-3 py-2 rounded-lg border hover:text-slate-900 dark:hover:text-slate-50
+"
                 onClick={resetFilters}
               >
                 Reset filtri
@@ -349,7 +365,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
 
             {/* list task */}
-            <div className="bg-white rounded-xl shadow p-6">
+            <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl shadow p-6">
               <h2 className="text-lg font-semibold mb-2">Tasks</h2>
               <span className="text-sm text-slate-500">
                 {tasks.length} task
@@ -357,7 +373,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
             </div>
 
 
-            <ul className="space-y-3">
+            <ul className=" list-base space-y-3">
               {filteredTasks.map((task) => {
                 const isEditing = editTaskId === task.id;
                 const draft = drafts[task.id];
@@ -366,8 +382,9 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
                 return (
                   <li
                     key={task.id}
-                    className="border rounded-xl p-4 hover:bg-slate-50 transition"
+                    className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                   >
+
                     <div className="flex justify-between items-start">
                       <div>
 
@@ -415,7 +432,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
                             {/* credit a Done */}
                             <div className="mt-2 flex gap-2">
-                              <select className="text-xs px-2 py-1 rounded-full bg-slate-100"
+                              <select className=" list-base text-xs px-2 py-1 rounded-full bg-slate-100"
                                 value={view.status}
                                 onChange={(e) => {
                                   const nextStatus = e.target.value as Status;
@@ -442,7 +459,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
                               </select>
 
-                              <select className="text-xs px-2 py-1 rounded-full bg-slate-100"
+                              <select className="list-base text-xs px-2 py-1 rounded-full bg-slate-100"
                                 value={view.priority}
                                 onChange={(e) => {
                                   const nextPriority = e.target.value as Priority;
@@ -467,10 +484,10 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
                             <h2 className="text-lg font-semibold">{task.title}</h2>
                             <p className="text-sm text-slate-500">{task.description}</p>
                             <div className="mt-2 flex gap-2">
-                              <span className="text-xs px-2 py-1 rounded-full bg-slate-100">
+                              <span className="list-base text-xs px-2 py-1 rounded-full bg-slate-100">
                                 {task.status}
                               </span>
-                              <span className="text-xs px-2 py-1 rounded-full bg-slate-100">
+                              <span className="list-base text-xs px-2 py-1 rounded-full bg-slate-100">
                                 {task.priority}
                               </span>
                             </div>
@@ -480,7 +497,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
                       <div className="flex gap-2">
                         {editTaskId === task.id ? (
-                          <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
+                          <button className="btn-base text-sm px-3 py-2 rounded-lg border hover:bg-white"
 
                             onClick={() => {
                               const d = drafts[task.id];
@@ -552,7 +569,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
                         ) : (
 
                           <button
-                            className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
+                            className="btn-base text-sm px-3 py-2 rounded-lg border hover:bg-white"
                             onClick={() => {
                               // setUiError(null);
                               setEditTaskId(task.id);
@@ -577,7 +594,7 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
 
 
-                        <button className="text-sm px-3 py-2 rounded-lg border hover:bg-white"
+                        <button className="btn-base text-sm px-3 py-2 rounded-lg border hover:bg-white"
                           onClick={() => {
                             setTasks(deleteTask(tasks, task.id));
                             pushAudit("TASK_DELETED", { taskId: task.id });
@@ -614,15 +631,15 @@ const { auditEvents, setAuditEvents, pushAudit, clearAudit } = useAudit();
 
         {/* AUDIT TAB */}
         {activeTab === "audit" && (
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold mb-2">Audit</h2>
 
-             <button
-          className="text-sm px-3 py-2 rounded-lg border"
-           onClick={clearAudit}
-        >
-          Clear audit
-        </button>
+            <button
+              className="btn-base mb-5 text-sm px-3 py-2 rounded-lg border"
+              onClick={clearAudit}
+            >
+              Clear audit
+            </button>
 
             {activeTab === "audit" && <AuditPanel events={auditEvents} />}
           </div>

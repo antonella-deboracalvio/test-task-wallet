@@ -62,7 +62,8 @@ export default function AuditPanel({ events }: { events: AuditEvent[] }) {
 
     return (
         
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl shadow p-6">
+
         <FilterBar
             selects={[
                 { options: auditOptions, selected: typeFilter, onSelect:(value)=>setTypeFilter(value as AuditEventType|"ALL") },
@@ -84,7 +85,7 @@ export default function AuditPanel({ events }: { events: AuditEvent[] }) {
                     {filteredEvents.map((event) => (
                         <li
                             key={event.id}
-                            className="border rounded-xl p-4 hover:bg-slate-50 transition"
+                            className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                         >
 
                             <div className="flex justify-between items-start">
