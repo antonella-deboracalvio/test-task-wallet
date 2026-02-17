@@ -15,7 +15,7 @@ L’applicazione consente di:
 - Filtrare task per stato, priorità e ricerca testuale
 - Supportare tema Dark / Light con toggle con persistenza preferenza utente
 - Importare ed esportare dati in formato JSON
-##Import / Export
+  #Import / Export
 - Versioning del payload (version: 1)
 - Validazione runtime tramite type guards (isExportPayloadV1)
 - Gestione errori JSON non valido
