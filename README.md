@@ -132,7 +132,7 @@ Il dark mode è configurato tramite Tailwind:
 --  Clonare il repository
 
 ```bash
-git clone < https://github.com/antonella-deboracalvio/test-task-wallet.git >
+git clone https://github.com/antonella-deboracalvio/test-task-wallet.git
 cd test-task-wallet
 npm install/ yarn install
 npm run dev
