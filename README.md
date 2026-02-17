@@ -100,7 +100,7 @@ Il dark mode è configurato tramite Tailwind:
 
 
 
-#### 🛠 Tecnologie Utilizzate ####
+#### Tecnologie Utilizzate ####
 
 - **React 18**
 - **TypeScript**
