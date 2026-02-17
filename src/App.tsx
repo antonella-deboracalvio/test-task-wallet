@@ -102,8 +102,8 @@ export default function App() {
 
 
   return (
-    
-    
+
+
 
     <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
 
@@ -170,11 +170,10 @@ export default function App() {
         {/* task */}
         <div className="flex gap-4 mb-6">
           <button
-          className={` btn px-4 py-2 rounded-lg border ${
-  activeTab === "tasks"
-    ? "bg-blue-600 text-white shadow border-blue-600"
-    : "bg-white dark:bg-slate-900 :bg-slate-50 dark:hover:bg-slathovere-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
-}`}
+            className={` btn px-4 py-2 rounded-lg border ${activeTab === "tasks"
+              ? "bg-blue-600 text-white shadow border-blue-600"
+              : "bg-white dark:bg-slate-900 :bg-slate-50 dark:hover:bg-slathovere-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+              }`}
 
             onClick={() => setActiveTab("tasks")}
           >
@@ -184,11 +183,10 @@ export default function App() {
 
           {/* wallet */}
           <button
-         className={`btn px-4 py-2 rounded-lg border ${
-  activeTab === "wallet"
-    ? "bg-blue-600 text-white shadow border-blue-600"
-    : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
-}`}
+            className={`btn px-4 py-2 rounded-lg border ${activeTab === "wallet"
+              ? "bg-blue-600 text-white shadow border-blue-600"
+              : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+              }`}
 
             onClick={() => setActiveTab("wallet")}
           >
@@ -197,16 +195,15 @@ export default function App() {
 
 
           {/* audit */}
-       <button
-  className={`px-4 py-2 rounded-lg border ${
-    activeTab === "audit"
-      ? "bg-blue-600 text-white shadow border-blue-600"
-      : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
-  }`}
-  onClick={() => setActiveTab("audit")}
->
-  Audit
-</button>
+          <button
+            className={`px-4 py-2 rounded-lg border ${activeTab === "audit"
+              ? "bg-blue-600 text-white shadow border-blue-600"
+              : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+              }`}
+            onClick={() => setActiveTab("audit")}
+          >
+            Audit
+          </button>
 
         </div>
 
@@ -217,6 +214,39 @@ export default function App() {
             <button
               className=" btn-base inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black transition"
               onClick={() => {
+
+                if (editTaskId) {
+                  const existsInDrafts = !!drafts[editTaskId];
+                  const existsInTasks = tasks.some(t => t.id === editTaskId);
+
+                  // task cancellato  pulisco e non blocco
+                  if (!existsInDrafts && !existsInTasks) {
+                    setEditTaskId(null);
+                    setUiError(null);
+                    // creo task
+                  }
+                }
+
+                setUiError(null);
+
+                // blocco se sto editando e il titolo (draft o task) è vuoto
+                if (editTaskId) {
+                  const currentTitle =
+                    (drafts[editTaskId]?.title ?? tasks.find(t => t.id === editTaskId)?.title ?? "").trim();
+
+                  if (!currentTitle) {
+                    setUiError("Inserisci un titolo prima di creare un nuovo task.");
+
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      [editTaskId]: { ...(prev[editTaskId] ?? {}), title: "Il titolo è obbligatorio" }
+                    }));
+
+                    return;
+                  }
+                }
+
+
                 // 1 credito creazione o blocco
                 const ok = trySpend(1);
                 if (!ok) {
@@ -596,6 +626,25 @@ export default function App() {
 
                         <button className="btn-base text-sm px-3 py-2 rounded-lg border hover:bg-white"
                           onClick={() => {
+                            // se sto cancellando il task in editing, pulisco lo stato di editing
+                            if (editTaskId === task.id) {
+                              setEditTaskId(null);
+
+                              setDrafts((prev) => {
+                                const copy = { ...prev };
+                                delete copy[task.id];
+                                return copy;
+                              });
+
+                              setFieldErrors((prev) => {
+                                const copy = { ...prev };
+                                delete copy[task.id];
+                                return copy;
+                              });
+
+                              setUiError(null);
+                            }
+
                             setTasks(deleteTask(tasks, task.id));
                             pushAudit("TASK_DELETED", { taskId: task.id });
 
