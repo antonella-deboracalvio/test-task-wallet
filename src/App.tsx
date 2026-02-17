@@ -171,7 +171,7 @@ export default function App() {
         <div className="flex gap-4 mb-6">
           <button
             className={` btn px-4 py-2 rounded-lg border ${activeTab === "tasks"
-              ? "bg-blue-600 text-white shadow border-blue-600"
+              ? "bg-blue-500 text-white shadow border-blue-600"
               : "bg-white dark:bg-slate-900 :bg-slate-50 dark:hover:bg-slathovere-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
               }`}
 
@@ -184,7 +184,7 @@ export default function App() {
           {/* wallet */}
           <button
             className={`btn px-4 py-2 rounded-lg border ${activeTab === "wallet"
-              ? "bg-blue-600 text-white shadow border-blue-600"
+              ? "bg-blue-500 text-white shadow border-blue-600"
               : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
               }`}
 
@@ -197,7 +197,7 @@ export default function App() {
           {/* audit */}
           <button
             className={`px-4 py-2 rounded-lg border ${activeTab === "audit"
-              ? "bg-blue-600 text-white shadow border-blue-600"
+              ? "bg-blue-500 text-white shadow border-blue-600"
               : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
               }`}
             onClick={() => setActiveTab("audit")}
@@ -412,8 +412,13 @@ export default function App() {
                 return (
                   <li
                     key={task.id}
-                    className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                    className={`border rounded-xl p-4 transition ${task.status === "DONE"
+                      ? "!bg-green-50 !border-green-300 dark:!bg-green-950/40 dark:!border-green-800"
+                      : "!bg-white dark:!bg-slate-900 !border-slate-200 dark:!border-slate-700"
+                      }
+                        hover:bg-slate-50 dark:hover:bg-slate-800`}
                   >
+
 
                     <div className="flex justify-between items-start">
                       <div>
@@ -437,6 +442,7 @@ export default function App() {
                                     ...prev,
                                     [task.id]: { ...prev[task.id], title: undefined },
                                   }));
+                                  setUiError(null);
                                 }
                               }}
                               placeholder="Inserisci un titolo..."
@@ -514,9 +520,15 @@ export default function App() {
                             <h2 className="text-lg font-semibold">{task.title}</h2>
                             <p className="text-sm text-slate-500">{task.description}</p>
                             <div className="mt-2 flex gap-2">
-                              <span className="list-base text-xs px-2 py-1 rounded-full bg-slate-100">
+                              <span
+                                className={`list-base text-xs px-2 py-1 rounded-full ${task.status === "DONE"
+                                  ? "!bg-green-200 !text-green-900 dark:!bg-green-900/40 dark:!text-green-100"
+                                  : "!bg-slate-100 dark:!bg-slate-800"
+                                  }`}
+                              >
                                 {task.status}
                               </span>
+
                               <span className="list-base text-xs px-2 py-1 rounded-full bg-slate-100">
                                 {task.priority}
                               </span>
@@ -582,6 +594,7 @@ export default function App() {
                               }
 
                               setTasks((prev) => updateTask(prev, nextTask));
+                              setUiError(null);     // banner pulito dopo save
 
                               setEditTaskId(null);
                               setDrafts((prev) => {
@@ -687,7 +700,7 @@ export default function App() {
               className="btn-base mb-5 text-sm px-3 py-2 rounded-lg border"
               onClick={clearAudit}
             >
-              Clear audit
+              Reset audit
             </button>
 
             {activeTab === "audit" && <AuditPanel events={auditEvents} />}

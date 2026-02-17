@@ -20,7 +20,8 @@ export function useAudit() {
   }, []);
 
   const clearAudit = useCallback(() => {
-    setAuditEvents([]);
+    if (confirm("Sei sicur* di voler cancellare tutto lo storico?"))
+      setAuditEvents([]);
   }, []);
 
   return { auditEvents, setAuditEvents, pushAudit, clearAudit };

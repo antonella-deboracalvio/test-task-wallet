@@ -37,9 +37,8 @@ export default function DataPort({
       </button>
 
       <label
-        className={` btn-base text-sm px-3 py-2 rounded-lg border hover:bg-slate-50 cursor-pointer ${
-          disabled ? "opacity-50 pointer-events-none" : ""
-        }`}
+        className={` btn-base text-sm px-3 py-2 rounded-lg border hover:bg-slate-50 cursor-pointer ${disabled ? "opacity-50 pointer-events-none" : ""
+          }`}
       >
         Import JSON
         <input

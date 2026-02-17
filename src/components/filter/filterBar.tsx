@@ -10,31 +10,31 @@ type SelectConfig = {
   onSelect: (value: string) => void;
 };
 
-type FilterBarProps= {
+type FilterBarProps = {
   selects: SelectConfig[];
   search: string;
   onSearch: (value: string) => void;
 };
 
-export default function FilterBar({ selects, search, onSearch }: FilterBarProps){
+export default function FilterBar({ selects, search, onSearch }: FilterBarProps) {
   return (
     <div className="flex gap-3 mb-4">
       {/* select input */}
-        {selects.map((s, idx: number) => (
-            <select
-            key={idx}
-        className="list-base border rounded-lg px-3 py-2 text-sm"
-        value={s.selected}
-        onChange={(e) => s.onSelect(e.target.value)}
-      >
+      {selects.map((s, idx: number) => (
+        <select
+          key={idx}
+          className="list-base border rounded-lg px-3 py-2 text-sm"
+          value={s.selected}
+          onChange={(e) => s.onSelect(e.target.value)}
+        >
 
-        {s.options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-        ))}
+          {s.options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      ))}
 
       {/* search input */}
       <input
